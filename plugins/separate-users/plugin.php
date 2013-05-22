@@ -102,9 +102,10 @@ function separate_users_insert_link($actions) {
 function separate_users_admin_list_where($where) {
         $user = addslashes(YOURLS_USER); 
         if($user == SEPARATE_USERS_ADMIN_USER) {
+        global $ydb;
                 return $where; // Allow admin user to see the lot. 
         }
-        return $where . " AND (`user` = '$user' OR `user` IS NULL) ";
+        return $where . " AND (`user` = '" . $ydb->escape($user) . "' OR `user` IS NULL) ";
 }
 
 /**
@@ -122,6 +123,6 @@ function separate_users_is_valid( $keyword ) {
                 return true;
         }
         $table = YOURLS_DB_TABLE_URL;
-        $result = $ydb->query("SELECT 1 FROM `$table` WHERE  (`user` IS NULL OR `user` = '" . $user . "') AND `keyword` = '" . $keyword . "'");
+        $result = $ydb->query("SELECT 1 FROM `$table` WHERE  (`user` IS NULL OR `user` = '" . $ydb->escape($user) . "') AND `keyword` = '" . $ydb->escape($keyword) . "'");
         return $result > 0;
 }
