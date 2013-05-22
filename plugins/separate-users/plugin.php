@@ -9,8 +9,8 @@ Author URI: http://phpir.com/
 */
 
 // Define the username given full view of the stats 
-if(!defined('SEPARATE_USERS_ADMIN_USER')) {
-        define("SEPARATE_USERS_ADMIN_USER", 'admin');
+if( !defined( 'SEPARATE_USERS_ADMIN_USER' ) ) {
+    define( 'SEPARATE_USERS_ADMIN_USER', 'admin' );
 }
 
 yourls_add_action( 'insert_link', 'separate_users_insert_link' );
@@ -18,7 +18,6 @@ yourls_add_action( 'activated_separate-users/plugin.php', 'separate_users_activa
 yourls_add_filter( 'admin_list_where', 'separate_users_admin_list_where' );
 yourls_add_filter( 'is_valid_user', 'separate_users_is_valid_user' );
 yourls_add_filter( 'api_url_stats', 'separate_users_api_url_stats' );
-
 
 /**
  * Activate the plugin, and add the user column to the table if not added
@@ -100,9 +99,9 @@ function separate_users_insert_link($actions) {
  * @return string
  */
 function separate_users_admin_list_where($where) {
-        $user = addslashes(YOURLS_USER); 
-        if($user == SEPARATE_USERS_ADMIN_USER) {
         global $ydb;
+        $user = YOURLS_USER; 
+        if(separate_users_is_admin_user($user)) {
                 return $where; // Allow admin user to see the lot. 
         }
         return $where . " AND (`user` = '" . $ydb->escape($user) . "' OR `user` IS NULL) ";
@@ -118,11 +117,30 @@ function separate_users_admin_list_where($where) {
 function separate_users_is_valid( $keyword ) {
         global $ydb; 
         
-        $user = addslashes(YOURLS_USER);
-        if($user == SEPARATE_USERS_ADMIN_USER) {
+        $user = YOURLS_USER;
+        if(separate_users_is_admin_user($user)) {
                 return true;
         }
         $table = YOURLS_DB_TABLE_URL;
         $result = $ydb->query("SELECT 1 FROM `$table` WHERE  (`user` IS NULL OR `user` = '" . $ydb->escape($user) . "') AND `keyword` = '" . $ydb->escape($keyword) . "'");
         return $result > 0;
 }
+
+/**
+ * Returns true if the user is considered an admin user. Admin users are 
+ * allowed to see and edit all keywords. Non admin users are only allowed to 
+ * see and edit keywords they created.
+ *
+ * By default a user with the username 'admin' is considered the administrator. 
+ * Other plugin's can add additional administrators by using the 
+ * seperate_users_is_admin_user_filter($is_admin, $user).
+ *
+ * @param string $user the username of an user
+ * @return boolean true if the user should be considered an administrator.
+ */
+function separate_users_is_admin_user($user) {
+    $is_admin = $user == SEPARATE_USERS_ADMIN_USER;
+    $is_admin = yourls_apply_filter('separate_users_is_admin_user_filter', $is_admin, $user);
+    return $is_admin;
+}
+
